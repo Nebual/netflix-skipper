@@ -1,0 +1,46 @@
+{
+  "id": 80025745,
+  "name": "Sense8_S1E1",
+  "scenes": [
+    {
+      "time": 395000,
+      "next": 400000,
+      "blood": 1,
+      "violence": 2,
+      "suicide": 3
+    },
+    {
+      "time": 1271000,
+      "next": 1348500,
+      "sex": 3
+    },
+    {
+      "time": 2593000,
+      "next": 2597750,
+      "blood": 2
+    },
+    {
+      "time": 2929900,
+      "next": 2932900,
+      "blood": 2
+    },
+    {
+      "time": 3715000,
+      "next": 3811800,
+      "blood": 1,
+      "violence": 1
+    },
+    {
+      "time": 3715001,
+      "next": 3719500,
+      "blood": 1,
+      "violence": 2
+    },
+    {
+      "time": 3799670,
+      "next": 3811800,
+      "blood": 1,
+      "violence": 2
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "Netflix Skipper",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Skip violent scenes on Netflix to get back to the plot",
+    "description": "Extension description"
+  }
+}
