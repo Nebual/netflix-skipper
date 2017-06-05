@@ -326,8 +326,20 @@
         if (videoId != getVideoID()) {
             videoId = getVideoID();
             triggerScenes = {};
-            $.getJSON(chrome.runtime.getURL("scenes/" + videoId + ".json"), function (data) {
-                triggerScenes = data.scenes;
+            var filename = "scenes/" + videoId + ".json";
+            chrome.storage.local.get(filename, function(data) {
+                if (filename in data) {
+                    triggerScenes = data[filename];
+                } else {
+                    $.getJSON(chrome.runtime.getURL(filename), function (data) {
+                        triggerScenes = data.scenes;
+                    }).fail(function (data) {
+                        $.getJSON("https://gitcdn.xyz/repo/Nebual/netflix-skipper/master/" + filename, function (data) {
+                            triggerScenes = data.scenes;
+                            chrome.storage.local.set({filename: data.scenes});
+                        });
+                    });
+                }
             });
         }
     }
