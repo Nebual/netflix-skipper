@@ -3,11 +3,27 @@
   "name": "Sense8_S1E1",
   "scenes": [
     {
+      "time": 227000,
+      "next": 235400,
+      "needle": 2
+    },
+    {
       "time": 395000,
       "next": 400000,
       "blood": 1,
       "violence": 2,
       "suicide": 3
+    },
+    {
+      "time": 571700,
+      "next": 573700,
+      "violence": 2,
+      "suicide": 2
+    },
+    {
+      "time": 1267000,
+      "next": 1348500,
+      "sex": 2
     },
     {
       "time": 1271000,
