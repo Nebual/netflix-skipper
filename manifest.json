@@ -3,7 +3,7 @@
 
   "name": "__MSG_extName__",
   "description": "__MSG_extDescription__",
-  "version": "0.1.1",
+  "version": "0.1.4",
   "default_locale": "en",
   "permissions": [
     "activeTab",
@@ -24,7 +24,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://www.netflix.com/watch/*"],
+      "matches": ["*://www.netflix.com/*"],
       "js": ["vendor/jquery.js", "content_script.js"]
     }
   ],

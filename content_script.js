@@ -102,27 +102,35 @@
 
     // 'playing', 'paused', 'loading', or 'idle'
     var getState = function () {
+        if (!getVideoID()) {
+            return 'menu';
+        }
         if (jQuery('.timeout-wrapper.player-active .icon-play').length > 0) {
             return 'idle';
         }
-        if (jQuery('.player-progress-round.player-hidden').length === 0) {
+        var $video = jQuery('.player-video-wrapper video');
+        if (jQuery('.player-progress-round.player-hidden').length === 0 || ($video.length && $video[0].seeking)) {
             return 'loading';
         }
-        if (jQuery('.player-control-button.player-play-pause.play').length === 0) {
-            return 'playing';
+        if (jQuery('.player-control-button.player-play-pause.play').length !== 0 || ($video.length && $video[0].paused)) {
+            return 'paused';
         }
         else {
-            return 'paused';
+            return 'playing';
         }
     };
 
     // current playback position in milliseconds
     var getPlaybackPosition = function () {
-        return Math.floor(jQuery('.player-video-wrapper video')[0].currentTime * 1000);
+        var $video = jQuery('.player-video-wrapper video');
+        if (!$video.length) return -1;
+        return Math.floor($video[0].currentTime * 1000);
     };
 
     var getVideoID = function () {
-        return parseInt(window.location.href.match(/^.*\/([0-9]+)\??.*/)[1])
+        var match = window.location.href.match(/^.*watch\/([0-9]+)\??.*/);
+        if (!match || !match.length) return 0;
+        return parseInt(match[1]);
     };
 
     // show the playback controls
@@ -280,11 +288,11 @@
             if (playTime >= scene.time) {
                 if (playTime < scene.next && warningsAboveThreshold(scene)) {
                     console.info("Seeking past", scene);
-                    return seek(scene.next)().then(function () {
-                        return play();
-                    });
+                    pushTask(seek(scene.next));
+                    pushTask(play);
+                    break;
                 } else {
-                    console.debug("Skipping", scene);
+                    console.debug("Ignoring", scene);
                     nextTriggerIndex++;
                 }
             } else {
@@ -313,7 +321,7 @@
 
     jQuery(window).on('mouseup keydown', function (e) {
         if (uiEventsHappening === 0 && e.which === 1) {
-            console.info("Current Playtime:", getPlaybackPosition());
+            console.debug("Current Playtime:", getPlaybackPosition());
         }
         if (enableSkipping && uiEventsHappening === 0) {
             resetVideoScenes();
@@ -326,17 +334,21 @@
         if (videoId != getVideoID()) {
             videoId = getVideoID();
             triggerScenes = {};
+            if (!videoId) return;
             var filename = "scenes/" + videoId + ".json";
             chrome.storage.local.get(filename, function(data) {
                 if (filename in data) {
-                    triggerScenes = data[filename];
+                    triggerScenes = data[filename].scenes;
+                    console.info("Loaded " + data[filename].name + " (" + triggerScenes.length + " scenes) from cache.");
                 } else {
                     $.getJSON(chrome.runtime.getURL(filename), function (data) {
                         triggerScenes = data.scenes;
+                        console.info("Loaded " + data.name + " (" + triggerScenes.length + " scenes) from extension cache.");
                     }).fail(function (data) {
                         $.getJSON("https://gitcdn.xyz/repo/Nebual/netflix-skipper/master/" + filename, function (data) {
                             triggerScenes = data.scenes;
-                            chrome.storage.local.set({filename: data.scenes});
+                            console.info("Loaded " + data.name + " (" + triggerScenes.length + " scenes) from Web repo.");
+                            chrome.storage.local.set({filename: data});
                         });
                     });
                 }
