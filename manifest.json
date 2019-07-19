@@ -29,7 +29,8 @@
     }
   ],
   "web_accessible_resources": [
-    "scenes/*.json"
+    "scenes/*.json",
+    "src/page.js"
   ],
   "icons": {
     "32": "icon_32.png",
