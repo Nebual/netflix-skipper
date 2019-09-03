@@ -35,7 +35,7 @@
     });
 
     function reloadSettings() {
-        chrome.storage.local.get(["enableSkipping", "sexThreshold", "bloodThreshold", "violenceThreshold", "suicideThreshold", "needleThreshold"], function (data) {
+        chrome.storage.local.get(["editorMode","enableSkipping", "sexThreshold", "bloodThreshold", "violenceThreshold", "suicideThreshold", "needleThreshold"], function (data) {
             document.dispatchEvent(new CustomEvent('NS-loadSettings', {
                 detail: data
             }));
