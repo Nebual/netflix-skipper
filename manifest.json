@@ -6,6 +6,7 @@
   "version": "0.1.4",
   "default_locale": "en",
   "permissions": [
+    "https://api.thetvdb.com/",
     "activeTab",
     "declarativeContent",
     "storage"
@@ -26,8 +27,15 @@
     {
       "matches": ["*://www.netflix.com/*"],
       "js": ["vendor/jquery.js", "content_script.js"]
+    },
+    {
+      "matches": ["*://plex.nebtown.info/*"],
+      "js": ["vendor/jquery.js", "content_script.js"]
     }
   ],
+  "externally_connectable": {
+    "matches": ["*://www.netflix.com/*"]
+  },
   "web_accessible_resources": [
     "scenes/*.json",
     "src/page.js"

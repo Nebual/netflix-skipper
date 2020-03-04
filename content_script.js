@@ -36,9 +36,11 @@
 
     function reloadSettings() {
         chrome.storage.local.get(["enableSkipping", "sexThreshold", "bloodThreshold", "violenceThreshold", "suicideThreshold", "needleThreshold"], function (data) {
-            document.dispatchEvent(new CustomEvent('NS-loadSettings', {
-                detail: data
-            }));
+            document.dispatchEvent(
+				new CustomEvent('NS-loadSettings', {
+					detail: { ...data, extensionId: chrome.runtime.id },
+				})
+			);
         });
     }
 
