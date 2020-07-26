@@ -3,7 +3,7 @@
 
   "name": "__MSG_extName__",
   "description": "__MSG_extDescription__",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "default_locale": "en",
   "permissions": [
     "https://api.thetvdb.com/",
@@ -21,16 +21,16 @@
       "38": "icon_128.png"
     },
     "default_title": "__MSG_extName__",
-    "default_popup": "popup.html"
+    "default_popup": "index.html"
   },
   "content_scripts": [
     {
       "matches": ["*://www.netflix.com/*"],
-      "js": ["vendor/jquery.js", "content_script.js"]
+      "js": ["content_script.js"]
     },
     {
       "matches": ["*://plex.nebtown.info/*"],
-      "js": ["vendor/jquery.js", "content_script.js"]
+      "js": ["content_script.js"]
     }
   ],
   "externally_connectable": {
@@ -38,8 +38,9 @@
   },
   "web_accessible_resources": [
     "scenes/*.json",
-    "src/page.js"
+    "page.js"
   ],
+  "content_security_policy": "script-src 'self' 'sha256-3Nk0h1ySFVujoJ/alFFje/Tl0DmKbR6oRF+IZkLL9CY='; object-src 'self'",
   "icons": {
     "32": "icon_32.png",
     "64": "icon_64.png",

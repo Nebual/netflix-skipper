@@ -1,0 +1,77 @@
+.App {
+  width: 340px;
+}
+
+.header {
+  background-color: #282c34;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: white;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+section {
+  margin: 0 0.5rem;
+}
+
+.IconButton:hover {
+  cursor: pointer;
+}
+
+h2, h3 {
+  margin: 0 0 0.5rem 0;
+}
+
+p {
+  margin: 0 0 0.5rem 0;
+}
+
+
+label {
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+input[type="text"] {
+  display: block;
+  box-sizing: border-box;
+  width: 100px;
+  border: 1px solid #b7b7b7;
+  border-radius: 2px;
+  padding: 2px 8px;
+}
+
+input[type="text"]:focus {
+  border-color: #158cba;
+}
+
+.option-container {
+  display: block;
+  margin: 10px 0;
+}
+
+h2 {
+  font-size: 1.2em;
+}
+
+h3 {
+  font-size: 1em;
+}
+
+.error {
+  color: #c00;
+}
+
+.option-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.option-container .select {
+  width: 220px;
+  font-size: 12px;
+}
