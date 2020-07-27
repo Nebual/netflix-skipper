@@ -328,6 +328,10 @@ class PlexController {
 		} else if (e.detail.delta) {
 			player.seek(player.getCurrentTime() + e.detail.delta);
 			sendCurrentTime();
+		} else if (e.detail.getVideoId) {
+			chrome.runtime.sendMessage(extensionId, {
+				videoId: player.getMovieId(),
+			});
 		}
 	});
 

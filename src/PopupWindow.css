@@ -1,5 +1,5 @@
 .App {
-  width: 340px;
+  width: 360px;
 }
 
 .header {
@@ -16,11 +16,35 @@ section {
   margin: 0 0.5rem;
 }
 
+.IconButton {
+  user-select: none;
+  font-size: 16px;
+}
 .IconButton:hover {
   cursor: pointer;
 }
 .IconButton--active {
   filter: drop-shadow(0px 0px 4px #46fa7f);
+}
+
+.IconButton--setNow .hover,
+.IconButton--setNow:hover .non-hover {
+  display: none;
+}
+.IconButton--setNow:hover .hover {
+  display: inline;
+}
+.IconButton--threshold-0 {
+  opacity: 0.33;
+}
+.IconButton--threshold-1 {
+  outline: rgb(255, 255, 137) solid;
+}
+.IconButton--threshold-2 {
+  outline: #ffc04d solid;
+}
+.IconButton--threshold-3 {
+  outline: red solid;
 }
 
 h2, h3 {
@@ -38,8 +62,7 @@ label {
   -ms-user-select: none;
 }
 
-input[type="text"] {
-  display: block;
+#skip-to {
   box-sizing: border-box;
   width: 100px;
   border: 1px solid #b7b7b7;
@@ -47,8 +70,15 @@ input[type="text"] {
   padding: 2px 8px;
 }
 
-input[type="text"]:focus {
+#skip-to:focus {
   border-color: #158cba;
+}
+
+.TimeDisplay__Input {
+  width: 50px;
+  border: 1px solid #b7b7b7;
+  border-radius: 2px;
+  padding: 2px 8px;
 }
 
 .option-container {
@@ -77,4 +107,8 @@ h3 {
 .option-container .select {
   width: 220px;
   font-size: 12px;
+}
+
+.editor-section {
+  padding-bottom: 0.5rem;
 }
