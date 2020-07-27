@@ -41,6 +41,10 @@ async function getJSON(url) {
 	});
 
     function reloadSettings() {
+        if (!chrome.storage.local) {
+			console.warn('Failed to reloadSettings: no chrome.storage.local');
+			return;
+		}
         chrome.storage.local.get(["enableSkipping", "sexThreshold", "bloodThreshold", "violenceThreshold", "suicideThreshold", "needleThreshold"], function (data) {
             document.dispatchEvent(
 				new CustomEvent('NS-loadSettings', {
@@ -60,13 +64,14 @@ async function getJSON(url) {
             sendResponse({});
             return;
         }
-        if (request.type === 'skipTo') {
-            document.dispatchEvent(new CustomEvent('NS-seek', {
-                detail: request.data.time
-            }));
+		if (request.type === 'playerAction') {
+			document.dispatchEvent(
+				new CustomEvent('NS-playerAction', {
+					detail: request.data,
+				})
+			);
 
-            sendResponse({});
-            return;
-        }
+			return;
+		}
     });
 })();

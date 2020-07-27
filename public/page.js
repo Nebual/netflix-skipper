@@ -152,17 +152,31 @@ class PlexController {
             }, 50);
         }
 
-        seek(time) {
-            this.player.seek(time);
-        }
+		undim() {
+			const overlay = document.getElementsByClassName('evidence-overlay');
+			if (overlay.length) {
+				overlay[0].style.display = 'none';
+			}
+			const playerControls = document.getElementsByClassName('PlayerControlsNeo__layout');
+			if (playerControls.length) {
+				playerControls[0].classList.remove('PlayerControlsNeo__layout--dimmed');
+			}
+		}
 
-        play() {
-            this.player.play();
-        }
+		seek(time) {
+			this.player.seek(time);
+			this.undim();
+		}
 
-        pause() {
-            this.player.pause();
-        }
+		play() {
+			this.player.play();
+			this.undim();
+		}
+
+		pause() {
+			this.player.pause();
+			this.undim();
+		}
 
         getCurrentTime() {
             return this.player.getCurrentTime();
@@ -298,9 +312,24 @@ class PlexController {
         localStorage.setItem('NS/' + e.detail.filename, JSON.stringify(e.detail));
     });
 
-    document.addEventListener('NS-seek', function (e) {
-        player.seek(e.detail);
-    });
+    function sendCurrentTime() {
+		chrome.runtime.sendMessage(extensionId, {
+			currentTime: player.getCurrentTime(),
+		});
+	}
+
+	document.addEventListener('NS-playerAction', function (e) {
+		console.debug('NS playerAction received', e.detail);
+		if (e.detail.playPauseToggle) {
+			player.isPlaying() ? player.pause() : player.play();
+			sendCurrentTime();
+		} else if (e.detail.time) {
+			player.seek(e.detail.time);
+		} else if (e.detail.delta) {
+			player.seek(player.getCurrentTime() + e.detail.delta);
+			sendCurrentTime();
+		}
+	});
 
     let syncTimer;
     document.addEventListener('NS-loadSettings', function (e) {
