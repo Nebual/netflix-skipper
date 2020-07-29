@@ -4,6 +4,7 @@ import './PopupWindow.css';
 import { useExtensionStorage } from './hooks';
 import EditorTab from './EditorTab';
 import ThresholdsTab from './ThresholdsTab';
+import { waitFor } from './util';
 
 export default function PopupWindow() {
 	const [error, setError] = useState('');
@@ -35,8 +36,8 @@ export default function PopupWindow() {
 	}, []);
 
 	// send a message to the content script
-	function sendMessage(type, data, showError, callback) {
-		const tab = tabRef.current;
+	async function sendMessage(type, data, showError, callback) {
+		const tab = await waitFor(() => tabRef.current);
 		if (!window.chrome || !window.chrome.tabs || !tab) {
 			return;
 		}

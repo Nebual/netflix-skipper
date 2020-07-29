@@ -4,6 +4,15 @@ async function getJSON(url) {
     return await (await fetch(url)).json()
 }
 
+function loadScript(scriptUrl) {
+	const script = document.createElement('script');
+	script.src = scriptUrl;
+	script.onload = function () {
+		this.remove();
+	};
+	(document.head || document.documentElement).appendChild(script);
+}
+
 (function () {
     // make sure the content script is only run once on the page
     if (window.netflixSkipperCSLoaded) {
@@ -11,19 +20,16 @@ async function getJSON(url) {
     }
     window.netflixSkipperCSLoaded = true;
 
-    const pageScript = document.createElement('script');
-    pageScript.src = chrome.runtime.getURL('page.js');
-    pageScript.onload = function () {
-        this.remove();
-    };
-    (document.head || document.documentElement).appendChild(pageScript);
+	loadScript(chrome.runtime.getURL('vendor/lz-string.js'));
+	loadScript(chrome.runtime.getURL('page.js'));
 
-
-    function sendVideoScenes(data) {
-        document.dispatchEvent(new CustomEvent('NS-loadVideoScenes', {
-            detail: data
-        }));
-    }
+	function sendVideoScenes(data) {
+		document.dispatchEvent(
+			new CustomEvent('NS-playerAction', {
+				detail: { sceneData: data },
+			})
+		);
+	}
 
     document.addEventListener('NS-requestVideoScenes', async function (e) {
 		const filename = e.detail.filename;
@@ -31,12 +37,12 @@ async function getJSON(url) {
             const data = await getJSON(chrome.runtime.getURL(filename))
 
             console.debug('Loaded ' + data.name + ' (' + data.scenes.length + ' scenes) from extension.');
-            sendVideoScenes({filename: filename, ...data});
+            sendVideoScenes(data);
         } catch (e) {
             const webData = await getJSON('https://gitcdn.xyz/repo/Nebual/netflix-skipper/master/' + filename)
 
             console.debug('Loaded ' + webData.name + ' (' + webData.scenes.length + ' scenes) from Web repo.');
-            sendVideoScenes({filename: filename, ...webData});
+            sendVideoScenes(webData);
         }
 	});
 
@@ -71,6 +77,7 @@ async function getJSON(url) {
 				})
 			);
 
+			sendResponse({});
 			return;
 		}
     });

@@ -38,6 +38,7 @@
   },
   "web_accessible_resources": [
     "scenes/*.json",
+    "vendor/lz-string.js",
     "page.js"
   ],
   "content_security_policy": "script-src 'self' 'sha256-3Nk0h1ySFVujoJ/alFFje/Tl0DmKbR6oRF+IZkLL9CY='; object-src 'self'",

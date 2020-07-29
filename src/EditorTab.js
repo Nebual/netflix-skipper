@@ -1,78 +1,56 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 import './PopupWindow.css';
-import { chromeStorageLocalGetPromise } from './storagePromises';
-import { JumpButton, NowButton, SeekButton, Threshold } from './Buttons';
+import { IconButton, NowButton, SeekButton, Threshold } from './Buttons';
+import { downloadAsFile, sampleScene } from './util';
 
 const chrome = window.chrome;
 
-async function getJSON(url) {
-	return await (await fetch(url)).json();
-}
-
-async function readScenes(videoId) {
-	const filename = 'scenes/' + videoId + '.json';
-	const cachedFilename = 'NS/' + filename;
-
-	const cached = await chromeStorageLocalGetPromise([cachedFilename]);
-	if (cached[cachedFilename]) {
-		console.debug(
-			'readScenes: using cached result',
-			cachedFilename,
-			cached
-		);
-		return JSON.parse(cached[cachedFilename]);
-	}
-	const data = await readScenesUncached(filename);
-	chrome.storage.local.set({ [cachedFilename]: JSON.stringify(data) });
-	return data;
-}
-async function readScenesUncached(filename) {
-	try {
-		return await getJSON(chrome.runtime.getURL(filename));
-	} catch (e) {
-		console.debug(
-			`Failed to fetch scenes for ${filename} from extension, trying Github`,
-			e
-		);
-		return await getJSON(
-			'https://gitcdn.xyz/repo/Nebual/netflix-skipper/master/' + filename
-		);
-	}
+function prepareForSave(sceneData) {
+	return {
+		...sceneData,
+		scenes: sceneData.scenes
+			.sort((a, b) => a.time - b.time)
+			.map(({ time, next, ...rest }) => ({ time, next, ...rest })),
+	};
 }
 
 export default function EditorTab({ sendMessage, setError }) {
 	const [currentTime, setCurrentTime] = useState(0);
 	const [videoId, setVideoId] = useState(0);
-	const [sceneData, setSceneData] = useState({});
+	const [sceneData, setSceneData] = useState(
+		chrome.runtime.getURL ? {} : sampleScene
+	);
+	const isLoadedRef = useRef(false);
+
+	function sendPlayerAction(payload) {
+		sendMessage('playerAction', payload, setError);
+	}
 
 	useEffect(() => {
-		if (!videoId) {
-			return;
+		if (videoId && sceneData.scenes) {
+			if (isLoadedRef.current) {
+				sendPlayerAction({ sceneData: sceneData });
+			} else {
+				isLoadedRef.current = true;
+			}
+		} else {
+			isLoadedRef.current = false;
 		}
-		async function getScenes() {
-			const data = await readScenes(videoId);
-			setSceneData(data);
-		}
-		getScenes();
-	}, [videoId]);
+	}, [videoId, sceneData]);
 
 	function seekDelta(delta) {
-		sendMessage('playerAction', { delta }, setError);
+		sendPlayerAction({ delta });
 	}
 	function seekTime(time, shouldSet = true) {
 		if (shouldSet) {
 			setCurrentTime(time);
 		}
-		sendMessage('playerAction', { time }, setError);
+		sendPlayerAction({ time });
 	}
 
 	useEffect(() => {
-		if (
-			!window.chrome ||
-			!window.chrome.runtime ||
-			!window.chrome.runtime.onMessageExternal
-		) {
+		if (!chrome || !chrome.runtime || !chrome.runtime.onMessageExternal) {
 			return;
 		}
 		function onMessageExternal(message, sender, sendResponse) {
@@ -80,18 +58,23 @@ export default function EditorTab({ sendMessage, setError }) {
 				setCurrentTime(message.currentTime);
 			}
 			if (message.videoId) {
+				isLoadedRef.current = false;
 				setVideoId(message.videoId);
 			}
+			if (message.sceneData) {
+				setSceneData(message.sceneData);
+			}
 		}
-		window.chrome.runtime.onMessageExternal.addListener(onMessageExternal);
-		return () =>
-			window.chrome.runtime.onMessageExternal.removeListener(
-				onMessageExternal
-			);
-	}, []);
+		chrome.runtime.onMessageExternal.addListener(onMessageExternal);
 
-	useEffect(() => {
-		sendMessage('playerAction', { getVideoId: true }, setError);
+		sendPlayerAction({
+			getVideoId: true,
+			getCurrentTime: true,
+			getSceneData: true,
+		});
+
+		return () =>
+			chrome.runtime.onMessageExternal.removeListener(onMessageExternal);
 	}, []);
 
 	return (
@@ -121,18 +104,18 @@ export default function EditorTab({ sendMessage, setError }) {
 					display: 'flex',
 				}}
 			>
+				<SeekButton seekDelta={seekDelta} amount={-60000} label="-1m" />
 				<SeekButton seekDelta={seekDelta} amount={-5000} label="-5s" />
 				<SeekButton seekDelta={seekDelta} amount={-1000} label="-1s" />
 				<button
 					type="button"
-					onClick={() =>
-						sendMessage('playerAction', { playPauseToggle: true })
-					}
+					onClick={() => sendPlayerAction({ playPauseToggle: true })}
 				>
 					Play
 				</button>
 				<SeekButton seekDelta={seekDelta} amount={1000} label="+1s" />
 				<SeekButton seekDelta={seekDelta} amount={5000} label="+5s" />
+				<SeekButton seekDelta={seekDelta} amount={60000} label="+1m" />
 			</div>
 			<div>
 				{(sceneData.scenes || []).map((scene, i) => {
@@ -215,9 +198,64 @@ export default function EditorTab({ sendMessage, setError }) {
 								icon={<>&#128137;</>}
 								label="Use of Needles"
 							/>
+							&nbsp;&nbsp;
+							{!(
+								scene.sex ||
+								scene.blood ||
+								scene.violence ||
+								scene.suicide ||
+								scene.needle
+							) && (
+								<IconButton
+									onClick={() =>
+										setSceneData((sceneData) => ({
+											...sceneData,
+											scenes: sceneData.scenes.filter(
+												(scene2, i2) => i !== i2
+											),
+										}))
+									}
+									icon={<>&#128465;&#65039;</>}
+									label="Delete Scene"
+								/>
+							)}
 						</div>
 					);
 				})}
+				<div style={{ display: 'flex' }}>
+					<IconButton
+						onClick={() =>
+							setSceneData((sceneData) => ({
+								...sceneData,
+								scenes: [
+									...sceneData.scenes,
+									{
+										time: currentTime,
+										next: currentTime + 5000,
+									},
+								],
+							}))
+						}
+						icon={<>&#10133;{/* Plus */}</>}
+						label="Create new Scene"
+					/>
+					<IconButton
+						onClick={() => {
+							const savable = prepareForSave(sceneData);
+							console.log(
+								`Downloading scene ${JSON.stringify(savable)}`
+							);
+							sendPlayerAction({ writeToUrlHash: savable });
+							downloadAsFile(
+								JSON.stringify(savable, null, 2),
+								`${videoId}.json`
+							);
+						}}
+						icon={<>&#128229;{/*Download Icon*/}</>}
+						label="Download scene.json"
+						style={{ marginLeft: 'auto' }}
+					/>
+				</div>
 			</div>
 		</section>
 	);
@@ -228,9 +266,10 @@ function TimeDisplay({ time, onChange, setNow, seekTime, next = false }) {
 		<>
 			{!next && <NowButton onClick={setNow} />}
 			{next && (
-				<JumpButton
+				<IconButton
 					onClick={() => seekTime(time)}
 					icon={<>&#10145;&#65039;{/*Arrow Right*/}</>}
+					label="Jump to Scene Start"
 				/>
 			)}
 			<input
@@ -240,9 +279,10 @@ function TimeDisplay({ time, onChange, setNow, seekTime, next = false }) {
 				onChange={(event) => onChange(event.target.value * 1000)}
 			/>
 			{!next && (
-				<JumpButton
+				<IconButton
 					onClick={() => seekTime(time)}
 					icon={<>&#11013;&#65039;{/*Arrow Left*/}</>}
+					label="Jump to Scene End"
 				/>
 			)}
 			{next && <NowButton onClick={setNow} />}

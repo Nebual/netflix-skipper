@@ -4,9 +4,9 @@ export function useExtensionStorage(id, def) {
 	const [state, setState] = useState(def);
 	useEffect(() => {
 		if (window.chrome && window.chrome.storage) {
-			window.chrome.storage.local.get({[id]: -1}, function(data) {
+			window.chrome.storage.local.get({ [id]: -1 }, function (data) {
 				if (data[id] === -1) {
-					updateState(def)
+					updateState(def);
 				} else {
 					setState(data[id]);
 				}

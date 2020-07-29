@@ -212,11 +212,11 @@ class PlexController {
         : new PlexController();
     window.NSPlayer = player; // expose as debugging aid
 
-    const checkInterval = 250;
+    const checkInterval = 200;
     let enableSkipping = false;
     let thresholds = {};
     let videoId = null;
-    let triggerScenes = {};
+    let sceneData = { scenes: [] };
     let nextTriggerIndex = 0;
     let lastFrameTime = 0;
 
@@ -240,8 +240,8 @@ class PlexController {
             return;
         }
 
-        while (nextTriggerIndex < triggerScenes.length) {
-            const scene = triggerScenes[nextTriggerIndex];
+        while (nextTriggerIndex < sceneData.scenes.length) {
+            const scene = sceneData.scenes[nextTriggerIndex];
             if (playTime >= scene.time) {
                 if (playTime < scene.next && warningsAboveThreshold(scene)) {
                     console.info("NS: Seeking past scene", scene);
@@ -249,7 +249,7 @@ class PlexController {
                     player.play();
                     break;
                 } else {
-                    console.debug("Ignoring", scene);
+                    // console.debug("Ignoring", scene);
                     nextTriggerIndex++;
                 }
             } else {
@@ -286,14 +286,13 @@ class PlexController {
         nextTriggerIndex = 0;
         if (videoId !== player.getMovieId()) {
             videoId = player.getMovieId();
-            triggerScenes = {};
+            sceneData = { scenes: [] };
             if (!videoId) return;
-            const filename = "scenes/" + videoId + ".json";
+            const filename = `scenes/${videoId}.json`;
             const cachedFile = localStorage.getItem('NS/' + filename);
             if (cachedFile) {
-                const parsedFile = JSON.parse(cachedFile);
-                triggerScenes = parsedFile.scenes;
-                console.info("Loaded " + parsedFile.name + " (" + triggerScenes.length + " scenes) from cache.");
+                sceneData = JSON.parse(cachedFile);
+                console.info("Loaded " + sceneData.name + " (" + sceneData.scenes.length + " scenes) from cache.");
             } else {
                 document.dispatchEvent(new CustomEvent('NS-requestVideoScenes', {
                     detail: {filename: filename}
@@ -302,20 +301,42 @@ class PlexController {
         }
     }
 
-    document.addEventListener('NS-initializedPlayer', resetVideoScenes);
+    function parseUrlForHash() {
+		const hash = window.location.hash;
+		if (hash.length > 20) {
+			const json = LZString.decompressFromEncodedURIComponent(
+				hash.substr(2, hash.length - 3)
+			);
+			if (json && json.substr(0, 1) === '{') {
+				try {
+					const loadedData = JSON.parse(json);
+					if (loadedData.scenes && loadedData.scenes.length) {
+						window.location.hash = '';
+						setSceneData(loadedData);
+						console.log(
+							`NS: Parsed ${loadedData.name} (${loadedData.scenes.length} scenes) from url.hash`
+						);
+					}
+				} catch (e) {
+					console.warn('NS: Failed to parse json from hash', e, json);
+				}
+			}
+		}
+	}
+	parseUrlForHash();
 
-    document.addEventListener('NS-loadVideoScenes', function (e) {
-        triggerScenes = e.detail.scenes;
-        lastFrameTime = 0;
-        nextTriggerIndex = 0;
-        console.info("NS: Loaded " + e.detail.name + " (" + triggerScenes.length + " scenes)");
-        localStorage.setItem('NS/' + e.detail.filename, JSON.stringify(e.detail));
-    });
+    document.addEventListener('NS-initializedPlayer', resetVideoScenes);
 
     function sendCurrentTime() {
 		chrome.runtime.sendMessage(extensionId, {
 			currentTime: player.getCurrentTime(),
 		});
+	}
+	function setSceneData(newData) {
+		sceneData = newData;
+		lastFrameTime = 0;
+		nextTriggerIndex = 0;
+		localStorage.setItem(`NS/scenes/${sceneData.id}.json`, JSON.stringify(sceneData));
 	}
 
 	document.addEventListener('NS-playerAction', function (e) {
@@ -325,13 +346,34 @@ class PlexController {
 			sendCurrentTime();
 		} else if (e.detail.time) {
 			player.seek(e.detail.time);
+			nextTriggerIndex = 0;
 		} else if (e.detail.delta) {
 			player.seek(player.getCurrentTime() + e.detail.delta);
+			nextTriggerIndex = 0;
 			sendCurrentTime();
-		} else if (e.detail.getVideoId) {
+		}
+		if (e.detail.getVideoId) {
 			chrome.runtime.sendMessage(extensionId, {
 				videoId: player.getMovieId(),
 			});
+		}
+		if (e.detail.getCurrentTime) {
+			sendCurrentTime()
+		}
+
+		if (e.detail.sceneData) {
+			setSceneData(e.detail.sceneData)
+			console.info(`NS: Loaded ${e.detail.sceneData.name} (${e.detail.sceneData.scenes.length} scenes)`);
+		}
+
+		if (e.detail.getSceneData) {
+			chrome.runtime.sendMessage(extensionId, { sceneData });
+		}
+
+		if (e.detail.writeToUrlHash) {
+			const json = JSON.stringify(e.detail.writeToUrlHash)
+			console.log(`NS: Downloading sceneData ${json}`);
+			window.location.hash = `#_${LZString.compressToEncodedURIComponent(json)}_`;
 		}
 	});
 

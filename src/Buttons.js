@@ -23,14 +23,15 @@ export function NowButton({ onClick }) {
 	);
 }
 
-export function JumpButton({ onClick, icon }) {
+export function IconButton({ onClick, icon, label, style }) {
 	return (
 		<span
 			className="IconButton"
-			title="Seek to Time"
-			aria-label="Seek to Time"
+			title={label}
+			aria-label={label}
 			onClick={onClick}
 			role="img"
+			style={style}
 		>
 			{icon}
 		</span>
