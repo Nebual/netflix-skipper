@@ -51,7 +51,7 @@ function loadScript(scriptUrl) {
 			console.warn('Failed to reloadSettings: no chrome.storage.local');
 			return;
 		}
-        chrome.storage.local.get(["enableSkipping", "sexThreshold", "bloodThreshold", "violenceThreshold", "suicideThreshold", "needleThreshold"], function (data) {
+        chrome.storage.local.get(["enableSkipping", "thresholds"], function (data) {
             document.dispatchEvent(
 				new CustomEvent('NS-loadSettings', {
 					detail: { ...data, extensionId: chrome.runtime.id },

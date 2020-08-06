@@ -259,11 +259,11 @@ class PlexController {
     }
 
     function warningsAboveThreshold(scene) {
-        if (scene.sex > thresholds.sexThreshold) return true;
-        if (scene.blood > thresholds.bloodThreshold) return true;
-        if (scene.violence > thresholds.violenceThreshold) return true;
-        if (scene.suicide > thresholds.suicideThreshold) return true;
-        if (scene.needle > thresholds.needleThreshold) return true;
+        for (const key in scene.thresholds) {
+            if (key in thresholds && scene.thresholds[key] > thresholds[key]) {
+                return true;
+            }
+        }
         return false;
     }
 
@@ -380,7 +380,7 @@ class PlexController {
     let syncTimer;
     document.addEventListener('NS-loadSettings', function (e) {
         console.debug("NS: loaded settings", e.detail);
-        thresholds = e.detail;
+        thresholds = e.detail.thresholds;
         extensionId = e.detail.extensionId;
         enableSkipping = e.detail.enableSkipping;
         clearInterval(syncTimer);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Select from 'react-select';
 
-import { useExtensionStorage } from './hooks';
+import { useThresholdStorage } from './hooks';
 
 const sexOptions = [
 	{ value: '0', label: 'No nude content (you prude)' },
@@ -27,22 +27,26 @@ const suicideOptions = [
 	{ value: '2', label: 'Moderate (eg. non-graphic failed attempt)' },
 	{ value: '3', label: 'High' },
 ];
+const sufferingOptions = [
+	{ value: '0', label: 'No implication' },
+	{ value: '1', label: 'Mild (eg. implication of)' },
+	{ value: '2', label: 'Moderate' },
+	{ value: '3', label: 'High' },
+];
 const needleOptions = [
 	{ value: '0', label: 'No needles' },
 	{ value: '3', label: 'Show use of needles' },
 ];
 
 export default function ThresholdsTab({ sendReload, setError }) {
-	const [sex, setSex] = useExtensionStorage('sexThreshold', '2');
-	const [blood, setBlood] = useExtensionStorage('bloodThreshold', '2');
-	const [violence, setViolence] = useExtensionStorage(
-		'violenceThreshold',
-		'2'
-	);
-	const [suicide, setSuicide] = useExtensionStorage('suicideThreshold', '2');
-	const [needle, setNeedle] = useExtensionStorage('needleThreshold', '0');
+	const [sex, setSex] = useThresholdStorage('sex', '2');
+	const [blood, setBlood] = useThresholdStorage('blood', '2');
+	const [violence, setViolence] = useThresholdStorage('violence', '2');
+	const [suffering, setSuffering] = useThresholdStorage('suffering', '2');
+	const [suicide, setSuicide] = useThresholdStorage('suicide', '2');
+	const [needle, setNeedle] = useThresholdStorage('needle', '0');
 
-	useEffect(sendReload, [sex, blood, violence, suicide, needle]);
+	useEffect(sendReload, [sex, blood, violence, suffering, suicide, needle]);
 
 	return (
 		<section>
@@ -77,6 +81,18 @@ export default function ThresholdsTab({ sendReload, setError }) {
 						({ value }) => value === violence
 					)}
 					onChange={({ value }) => setViolence(value)}
+				/>
+			</div>
+			<div className="option-container">
+				<label htmlFor="suffering-threshold">Suffering</label>
+				<Select
+					id="suffering-threshold"
+					className="select"
+					options={sufferingOptions}
+					value={sufferingOptions.find(
+						({ value }) => value === suffering
+					)}
+					onChange={({ value }) => setSuffering(value)}
 				/>
 			</div>
 			<div className="option-container">

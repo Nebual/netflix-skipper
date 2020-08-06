@@ -1,5 +1,5 @@
 .App {
-  width: 380px;
+  width: 450px;
 }
 
 .header {
@@ -81,11 +81,6 @@ label {
   padding: 2px 8px;
 }
 
-.option-container {
-  display: block;
-  margin: 10px 0;
-}
-
 h2 {
   font-size: 1.2em;
 }
@@ -100,6 +95,7 @@ h3 {
 
 .option-container {
   display: flex;
+  margin: 10px 0;
   justify-content: space-between;
   align-items: center;
 }
@@ -111,4 +107,9 @@ h3 {
 
 .editor-section {
   padding-bottom: 0.5rem;
+}
+
+.scenes-list {
+  max-height: 12rem;
+  overflow-y: auto;
 }

@@ -8,7 +8,7 @@ export function SeekButton({ seekDelta, amount, label }) {
 	);
 }
 
-export function NowButton({ onClick }) {
+export function NowButton({ onClick, next }) {
 	return (
 		<span
 			className="IconButton IconButton--setNow"
@@ -17,7 +17,9 @@ export function NowButton({ onClick }) {
 			onClick={onClick}
 			role="img"
 		>
-			<span className="non-hover">&#128347;</span>
+			<span className="non-hover">
+				{next ? <>&#128340;</> : <>&#128344;</>}
+			</span>
 			<span className="hover">&#9997;</span>
 		</span>
 	);

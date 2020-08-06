@@ -3,13 +3,49 @@ import React, { useState, useEffect, useRef } from 'react';
 import './PopupWindow.css';
 import { IconButton, NowButton, SeekButton, Threshold } from './Buttons';
 import { downloadAsFile, sampleScene } from './util';
+import TextInput from './TextInput';
 
 const chrome = window.chrome;
 
-function prepareForSave(sceneData) {
+const baseThresholds = [
+	{
+		id: 'sex',
+		icon: <>&#127814;</>,
+		label: 'Sex / Nudity',
+	},
+	{
+		id: 'blood',
+		icon: <>&#129656;</>,
+		label: 'Blood / Gore',
+	},
+	{
+		id: 'violence',
+		icon: <>&#9876;&#65039;</>,
+		label: 'Violence',
+	},
+	{
+		id: 'suffering',
+		icon: <>&#128560;</>,
+		label: 'Suffering',
+	},
+	{
+		id: 'suicide',
+		icon: <>&#128128;</>,
+		label: 'Suicide',
+	},
+	{
+		id: 'needle',
+		icon: <>&#128137;</>,
+		label: 'Use of Needles',
+	},
+];
+const baseThresholdIds = baseThresholds.map(({ id }) => id);
+
+function prepareForSave({ id, scenes, ...sceneData }) {
 	return {
+		id,
 		...sceneData,
-		scenes: sceneData.scenes
+		scenes: scenes
 			.sort((a, b) => a.time - b.time)
 			.map(({ time, next, ...rest }) => ({ time, next, ...rest })),
 	};
@@ -19,8 +55,9 @@ export default function EditorTab({ sendMessage, setError }) {
 	const [currentTime, setCurrentTime] = useState(0);
 	const [videoId, setVideoId] = useState(0);
 	const [sceneData, setSceneData] = useState(
-		chrome.runtime.getURL ? {} : sampleScene
+		chrome.runtime.getURL ? { scenes: [] } : sampleScene
 	);
+	const [newTag, setNewTag] = useState('');
 	const isLoadedRef = useRef(false);
 
 	function sendPlayerAction(payload) {
@@ -77,18 +114,27 @@ export default function EditorTab({ sendMessage, setError }) {
 			chrome.runtime.onMessageExternal.removeListener(onMessageExternal);
 	}, []);
 
+	const customThresholds = [
+		...new Set([
+			...(sceneData.scenes || []).flatMap((scene) =>
+				Object.keys(scene.thresholds).filter(
+					(thresholdId) => !baseThresholdIds.includes(thresholdId)
+				)
+			),
+			...(newTag && [newTag]),
+		]),
+	];
+
 	return (
 		<section className="editor-section">
-			<div className="option-container">
-				<label htmlFor="skip-to">Skip to (ms)</label>
-				<div style={{ display: 'flex' }}>
-					<input
-						type="text"
+			<div className="option-container" style={{ display: 'flex' }}>
+				<div style={{ marginLeft: 'auto' }}>
+					<label htmlFor="skip-to">Skip to: </label>
+					<TextInput
 						id="skip-to"
 						value={currentTime / 1000}
-						onChange={(event) =>
-							setCurrentTime(event.target.value * 1000)
-						}
+						setValue={(value) => setCurrentTime(value * 1000)}
+						isNumeric
 					/>
 					<button
 						type="button"
@@ -105,19 +151,26 @@ export default function EditorTab({ sendMessage, setError }) {
 				}}
 			>
 				<SeekButton seekDelta={seekDelta} amount={-60000} label="-1m" />
+				<SeekButton
+					seekDelta={seekDelta}
+					amount={-15000}
+					label="-15s"
+				/>
 				<SeekButton seekDelta={seekDelta} amount={-5000} label="-5s" />
 				<SeekButton seekDelta={seekDelta} amount={-1000} label="-1s" />
 				<button
 					type="button"
 					onClick={() => sendPlayerAction({ playPauseToggle: true })}
+					style={{ marginLeft: '1rem', marginRight: '1rem' }}
 				>
 					Play
 				</button>
 				<SeekButton seekDelta={seekDelta} amount={1000} label="+1s" />
 				<SeekButton seekDelta={seekDelta} amount={5000} label="+5s" />
+				<SeekButton seekDelta={seekDelta} amount={15000} label="+15s" />
 				<SeekButton seekDelta={seekDelta} amount={60000} label="+1m" />
 			</div>
-			<div>
+			<div className="scenes-list">
 				{(sceneData.scenes || []).map((scene, i) => {
 					function updateScene(changes) {
 						setSceneData((sceneData) => ({
@@ -127,6 +180,23 @@ export default function EditorTab({ sendMessage, setError }) {
 							),
 						}));
 					}
+					function updateThreshold(changes) {
+						setSceneData((sceneData) => ({
+							...sceneData,
+							scenes: sceneData.scenes.map((scene2, i2) =>
+								i === i2
+									? {
+											...scene2,
+											thresholds: {
+												...scene2.thresholds,
+												...changes,
+											},
+									  }
+									: scene2
+							),
+						}));
+					}
+
 					return (
 						<div key={`scene-${scene.time}`}>
 							<div
@@ -158,54 +228,41 @@ export default function EditorTab({ sendMessage, setError }) {
 									seekTime={seekTime}
 								/>
 							</div>
-							<Threshold
-								value={scene.sex}
-								setValue={(value) =>
-									updateScene({ sex: value })
-								}
-								icon={<>&#127814;</>}
-								label="Sex / Nudity"
-							/>
-							<Threshold
-								value={scene.blood}
-								setValue={(value) =>
-									updateScene({ blood: value })
-								}
-								icon={<>&#129656;</>}
-								label="Blood / Gore"
-							/>
-							<Threshold
-								value={scene.violence}
-								setValue={(value) =>
-									updateScene({ violence: value })
-								}
-								icon={<>&#9876;&#65039;</>}
-								label="Violence"
-							/>
-							<Threshold
-								value={scene.suicide}
-								setValue={(value) =>
-									updateScene({ suicide: value })
-								}
-								icon={<>&#128128;</>}
-								label="Suicide"
-							/>
-							<Threshold
-								value={scene.needle}
-								setValue={(value) =>
-									updateScene({ needle: value })
-								}
-								icon={<>&#128137;</>}
-								label="Use of Needles"
-							/>
+							{baseThresholds.map(({ id, icon, label }) => (
+								<Threshold
+									key={`baseThreshold-${id}`}
+									value={scene.thresholds[id]}
+									setValue={(value) =>
+										updateThreshold({ [id]: value })
+									}
+									icon={icon}
+									label={label}
+								/>
+							))}
+							{customThresholds.map((id) => (
+								<Threshold
+									key={`customThreshold-${id}`}
+									value={scene.thresholds[id]}
+									setValue={(value) =>
+										updateThreshold({ [id]: value })
+									}
+									icon={
+										<span
+											style={{
+												fontSize: '9px',
+												margin: '2px',
+											}}
+										>
+											{id.substr(0, 3)}
+										</span>
+									}
+									label={id}
+								/>
+							))}
 							&nbsp;&nbsp;
-							{!(
-								scene.sex ||
-								scene.blood ||
-								scene.violence ||
-								scene.suicide ||
-								scene.needle
-							) && (
+							{Object.values(scene.thresholds).filter(
+								(value) => value > 0
+							).length === 0 && (
 								<IconButton
 									onClick={() =>
 										setSceneData((sceneData) => ({
@@ -223,25 +280,47 @@ export default function EditorTab({ sendMessage, setError }) {
 					);
 				})}
 				<div style={{ display: 'flex' }}>
-					<IconButton
-						onClick={() =>
-							setSceneData((sceneData) => ({
-								...sceneData,
-								scenes: [
-									...sceneData.scenes,
-									{
-										time: currentTime,
-										next: currentTime + 5000,
-									},
-								],
-							}))
-						}
-						icon={<>&#10133;{/* Plus */}</>}
-						label="Create new Scene"
-					/>
+					<span style={{ fontSize: '10px' }}>
+						<IconButton
+							onClick={() =>
+								setSceneData((sceneData) => ({
+									...sceneData,
+									scenes: [
+										...sceneData.scenes,
+										{
+											time: currentTime,
+											next: currentTime + 5000,
+											thresholds: {},
+										},
+									],
+								}))
+							}
+							icon={<>&#10133;{/* Plus */}</>}
+							label="Create new Scene"
+						/>{' '}
+						New Scene
+					</span>
+					<span
+						style={{
+							marginLeft: 'auto',
+							marginRight: '2rem',
+							fontSize: '10px',
+						}}
+					>
+						New Custom Tag:&nbsp;
+						<input
+							type="text"
+							value={newTag}
+							onChange={(e) => setNewTag(e.target.value)}
+							style={{ width: '7rem' }}
+						/>
+					</span>
 					<IconButton
 						onClick={() => {
-							const savable = prepareForSave(sceneData);
+							const savable = prepareForSave({
+								...sceneData,
+								id: videoId,
+							});
 							console.log(
 								`Downloading scene ${JSON.stringify(savable)}`
 							);
@@ -253,7 +332,6 @@ export default function EditorTab({ sendMessage, setError }) {
 						}}
 						icon={<>&#128229;{/*Download Icon*/}</>}
 						label="Download scene.json"
-						style={{ marginLeft: 'auto' }}
 					/>
 				</div>
 			</div>
@@ -264,28 +342,28 @@ export default function EditorTab({ sendMessage, setError }) {
 function TimeDisplay({ time, onChange, setNow, seekTime, next = false }) {
 	return (
 		<>
-			{!next && <NowButton onClick={setNow} />}
+			{!next && <NowButton onClick={setNow} next={next} />}
 			{next && (
 				<IconButton
 					onClick={() => seekTime(time)}
 					icon={<>&#10145;&#65039;{/*Arrow Right*/}</>}
-					label="Jump to Scene Start"
+					label="Jump to Scene End"
 				/>
 			)}
-			<input
-				type="text"
+			<TextInput
 				className="TimeDisplay__Input"
 				value={Math.round(time / 10) / 100}
-				onChange={(event) => onChange(event.target.value * 1000)}
+				setValue={(value) => onChange(value * 1000)}
+				isNumeric
 			/>
 			{!next && (
 				<IconButton
 					onClick={() => seekTime(time)}
 					icon={<>&#11013;&#65039;{/*Arrow Left*/}</>}
-					label="Jump to Scene End"
+					label="Jump to Scene Start"
 				/>
 			)}
-			{next && <NowButton onClick={setNow} />}
+			{next && <NowButton onClick={setNow} next={next} />}
 		</>
 	);
 }
