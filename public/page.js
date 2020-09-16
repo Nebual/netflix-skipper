@@ -7,22 +7,7 @@ function showToast(msg) {
 	console.log('[NetflixSkipper] ' + msg);
 }
 
-async function boop() {
-	const json = await PlexController.getMediaMetadata();
-	console.log('jsons', json);
-	return json;
-}
-
 let extensionId = '';
-async function requestTheTVDB() {
-	chrome.runtime.sendMessage(
-        extensionId,
-		{ contentScriptQuery: 'queryTVDB', name: 'Cowboy Bebop' },
-		response => {
-            console.log("queryTVDB response", response);
-		}
-	);
-}
 
 function setIconStatus(active) {
 	if (!extensionId) {
@@ -32,112 +17,6 @@ function setIconStatus(active) {
 		contentScriptQuery: 'setIconStatus',
 		active: !!active,
 	});
-}
-
-class PlexController {
-	static makeRequest(url, user, server) {
-		return new Promise(function(resolve, reject) {
-			var origAccessToken = localStorage.myPlexAccessToken;
-			var serverNode = {};
-			if (localStorage.users) {
-				serverNode = JSON.parse(localStorage.users);
-			} else {
-				logMessage('User details not found');
-			}
-			var tokenToTry = origAccessToken;
-			if (serverNode === undefined) {
-				serverNode = {
-					users: [],
-				};
-			}
-
-			if (user !== undefined && server !== undefined) {
-				if (user < serverNode.users.length) {
-					if (server < serverNode.users[user].servers.length) {
-						tokenToTry =
-							serverNode.users[user].servers[server].accessToken;
-					} else {
-						showToast('Could not find authentication info', 1);
-						reject();
-						return;
-					}
-				} else {
-					showToast('Could not find authentication info', 1);
-					reject();
-					return;
-				}
-			}
-			var onError = function() {
-				if (user === undefined) {
-					user = 0;
-					server = 0;
-				} else {
-					server++;
-					if (serverNode.users[user].servers.length === server) {
-						user++;
-						server = 0;
-					}
-				}
-				PlexController.makeRequest(url, user, server).then(
-					resolve,
-					reject
-				);
-			};
-
-			var authedUrl = url + '&X-Plex-Token=' + tokenToTry;
-			logMessage('Calling ' + authedUrl);
-			fetch(authedUrl, {
-				onerror: onError,
-			})
-				.catch(state => {
-					logMessage('catch case ' + JSON.stringify(state));
-				})
-				.then(state => {
-					if (state.status === 200) {
-						logMessage('Called sucessfully to ' + url);
-						resolve(state);
-					} else if (state.status === 401) {
-						logMessage('Not Authorised ' + url);
-						onError();
-					} else if (state.status !== 200) {
-						logMessage('Request returned ' + state.status);
-						showToast(
-							'Error calling: ' +
-								url +
-								'. Response: ' +
-								state.responseText +
-								' Code:' +
-								state.status +
-								' Message: ' +
-								state.statusText,
-							1
-						);
-					}
-				});
-		});
-	}
-
-	static async getMediaMetadata() {
-		const url = window.location.href;
-		let id = url.substr(url.indexOf('%2Fmetadata%2F') + 14);
-		const idToken = id.indexOf('&');
-		if (idToken !== -1) {
-			id = id.substr(0, idToken);
-		}
-
-		const metaDataPath =
-			window.location.origin +
-			'/library/metadata/' +
-			id;
-			//'?includeConcerts=1&includeExtras=1&includeOnDeck=1&includePopularLeaves=1&includePreferences=1&includeChapters=1&asyncCheckFiles=0&asyncRefreshAnalysis=0&asyncRefreshLocalMediaAgent=0';
-		const response = await PlexController.makeRequest(metaDataPath);
-		const xml = await new window.DOMParser().parseFromString(
-			await response.text(),
-			'text/xml'
-		);
-		const json = xml2json(xml);
-		return json;
-	}
 }
 
 (function () {
@@ -235,9 +114,7 @@ class PlexController {
         }
     }
 
-    const player = ('netflix' in window)
-        ? new NetflixController()
-        : new PlexController();
+    const player = new NetflixController();
     window.NSPlayer = player; // expose as debugging aid
 
     const checkInterval = 200;
