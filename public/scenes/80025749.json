@@ -1,0 +1,30 @@
+{
+  "id": 80025749,
+  "name": "Sense8_S1E5",
+  "scenes": [
+    {
+      "time": 659634,
+      "next": 668637,
+      "thresholds": {
+        "violence": 1,
+        "suffering": 1
+      }
+    },
+    {
+      "time": 2028124,
+      "next": 2050532,
+      "thresholds": {
+        "blood": 1,
+        "violence": 1
+      }
+    },
+    {
+      "time": 2100884,
+      "next": 2112784,
+      "thresholds": {
+        "blood": 1,
+        "violence": 1
+      }
+    }
+  ]
+}

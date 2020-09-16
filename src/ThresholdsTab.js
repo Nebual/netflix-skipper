@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import Select from 'react-select';
 
 import { useThresholdStorage } from './hooks';
+import { sampleScene, baseThresholds } from './util';
+import { Threshold } from './Buttons';
+import Select from "./Select";
 
 const sexOptions = [
 	{ value: '0', label: 'No nude content (you prude)' },
@@ -48,14 +50,73 @@ export default function ThresholdsTab({ sendReload, setError }) {
 
 	useEffect(sendReload, [sex, blood, violence, suffering, suicide, needle]);
 
+	const [sceneData, setSceneData] = useState(
+		window.chrome.runtime.getURL ? { scenes: [] } : sampleScene
+	);
+
+	useEffect(() => {
+		if (!window.chrome || !window.chrome.tabs) {
+			return;
+		}
+
+		function onMessageExternal(message, sender, sendResponse) {
+			if (message.sceneData) {
+				setSceneData(message.sceneData);
+			}
+		}
+		window.chrome.runtime.onMessageExternal.addListener(onMessageExternal);
+
+		return () => {
+			window.chrome.runtime.onMessageExternal.removeListener(
+				onMessageExternal
+			);
+		};
+	}, []);
+
+	function ThresholdIndicator({ id, sceneData, value }) {
+		const threshold = baseThresholds.find(
+			(threshold) => threshold.id === id
+		);
+		const thresholdAmounts = sceneData.scenes
+			.map((scene) => scene.thresholds[id])
+			.filter((val) => val);
+		if (thresholdAmounts.length === 0) {
+			return null;
+		}
+		const min = Math.min(...thresholdAmounts);
+		const max = Math.max(...thresholdAmounts);
+		return (
+			<>
+				<Threshold
+					value={min}
+					icon={threshold.icon}
+					label={threshold.label}
+					className={`margin-left-auto margin-right-2 ${value < min && 'threshold-grey'}`}
+				/>
+				{max > min && (
+					<Threshold
+						value={max}
+						icon={threshold.icon}
+						label={threshold.label}
+						className={`margin-right-2 ${value < max && 'threshold-grey'}`}
+					/>
+				)}
+			</>
+		);
+	}
+
 	return (
 		<section>
 			<h3>Content Thresholds</h3>
 			<div className="option-container">
 				<label htmlFor="sex-threshold">Sex + Nudity</label>
+				<ThresholdIndicator
+					id="sex"
+					sceneData={sceneData}
+					value={sex}
+				/>
 				<Select
 					id="sex-threshold"
-					className="select"
 					options={sexOptions}
 					value={sexOptions.find(({ value }) => value === sex)}
 					onChange={({ value }) => setSex(value)}
@@ -63,9 +124,13 @@ export default function ThresholdsTab({ sendReload, setError }) {
 			</div>
 			<div className="option-container">
 				<label htmlFor="blood-threshold">Blood</label>
+				<ThresholdIndicator
+					id="blood"
+					sceneData={sceneData}
+					value={blood}
+				/>
 				<Select
 					id="blood-threshold"
-					className="select"
 					options={bloodOptions}
 					value={bloodOptions.find(({ value }) => value === blood)}
 					onChange={({ value }) => setBlood(value)}
@@ -73,9 +138,13 @@ export default function ThresholdsTab({ sendReload, setError }) {
 			</div>
 			<div className="option-container">
 				<label htmlFor="violence-threshold">Violence</label>
+				<ThresholdIndicator
+					id="violence"
+					sceneData={sceneData}
+					value={violence}
+				/>
 				<Select
 					id="violence-threshold"
-					className="select"
 					options={violenceOptions}
 					value={violenceOptions.find(
 						({ value }) => value === violence
@@ -85,9 +154,13 @@ export default function ThresholdsTab({ sendReload, setError }) {
 			</div>
 			<div className="option-container">
 				<label htmlFor="suffering-threshold">Suffering</label>
+				<ThresholdIndicator
+					id="suffering"
+					sceneData={sceneData}
+					value={suffering}
+				/>
 				<Select
 					id="suffering-threshold"
-					className="select"
 					options={sufferingOptions}
 					value={sufferingOptions.find(
 						({ value }) => value === suffering
@@ -97,9 +170,13 @@ export default function ThresholdsTab({ sendReload, setError }) {
 			</div>
 			<div className="option-container">
 				<label htmlFor="suicide-threshold">Suicide</label>
+				<ThresholdIndicator
+					id="suicide"
+					sceneData={sceneData}
+					value={suicide}
+				/>
 				<Select
 					id="suicide-threshold"
-					className="select"
 					options={suicideOptions}
 					value={suicideOptions.find(
 						({ value }) => value === suicide
@@ -109,9 +186,13 @@ export default function ThresholdsTab({ sendReload, setError }) {
 			</div>
 			<div className="option-container">
 				<label htmlFor="needle-threshold">Needles</label>
+				<ThresholdIndicator
+					id="needle"
+					sceneData={sceneData}
+					value={needle}
+				/>
 				<Select
 					id="needle-threshold"
-					className="select"
 					options={needleOptions}
 					value={needleOptions.find(({ value }) => value === needle)}
 					onChange={({ value }) => setNeedle(value)}

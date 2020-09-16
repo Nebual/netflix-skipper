@@ -1,3 +1,5 @@
+import React from "react";
+
 export async function sleep(delay) {
 	return new Promise((resolve) => setTimeout(resolve, delay));
 }
@@ -49,3 +51,36 @@ export const sampleScene = {
 		{ time: 3799670, next: 3811800, thresholds: { blood: 1, violence: 2 } },
 	],
 };
+
+export const baseThresholds = [
+	{
+		id: 'sex',
+		icon: <>&#127814;</>,
+		label: 'Sex / Nudity',
+	},
+	{
+		id: 'blood',
+		icon: <>&#129656;</>,
+		label: 'Blood / Gore',
+	},
+	{
+		id: 'violence',
+		icon: <>&#9876;&#65039;</>,
+		label: 'Violence',
+	},
+	{
+		id: 'suffering',
+		icon: <>&#128560;</>,
+		label: 'Suffering',
+	},
+	{
+		id: 'suicide',
+		icon: <>&#128128;</>,
+		label: 'Suicide',
+	},
+	{
+		id: 'needle',
+		icon: <>&#128137;</>,
+		label: 'Use of Needles',
+	},
+];

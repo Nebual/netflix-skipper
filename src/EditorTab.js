@@ -2,43 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 
 import './PopupWindow.css';
 import { IconButton, NowButton, SeekButton, Threshold } from './Buttons';
-import { downloadAsFile, sampleScene } from './util';
+import { downloadAsFile, sampleScene, baseThresholds } from './util';
 import TextInput from './TextInput';
 
 const chrome = window.chrome;
 
-const baseThresholds = [
-	{
-		id: 'sex',
-		icon: <>&#127814;</>,
-		label: 'Sex / Nudity',
-	},
-	{
-		id: 'blood',
-		icon: <>&#129656;</>,
-		label: 'Blood / Gore',
-	},
-	{
-		id: 'violence',
-		icon: <>&#9876;&#65039;</>,
-		label: 'Violence',
-	},
-	{
-		id: 'suffering',
-		icon: <>&#128560;</>,
-		label: 'Suffering',
-	},
-	{
-		id: 'suicide',
-		icon: <>&#128128;</>,
-		label: 'Suicide',
-	},
-	{
-		id: 'needle',
-		icon: <>&#128137;</>,
-		label: 'Use of Needles',
-	},
-];
 const baseThresholdIds = baseThresholds.map(({ id }) => id);
 
 function prepareForSave({ id, scenes, ...sceneData }) {
@@ -54,6 +22,7 @@ function prepareForSave({ id, scenes, ...sceneData }) {
 export default function EditorTab({ sendMessage, setError }) {
 	const [currentTime, setCurrentTime] = useState(0);
 	const [videoId, setVideoId] = useState(0);
+	const [sceneName, setSceneName] = useState('');
 	const [sceneData, setSceneData] = useState(
 		chrome.runtime.getURL ? { scenes: [] } : sampleScene
 	);
@@ -97,6 +66,7 @@ export default function EditorTab({ sendMessage, setError }) {
 			if (message.videoId) {
 				isLoadedRef.current = false;
 				setVideoId(message.videoId);
+				setSceneName(message.sceneName);
 			}
 			if (message.sceneData) {
 				setSceneData(message.sceneData);
@@ -320,6 +290,7 @@ export default function EditorTab({ sendMessage, setError }) {
 							const savable = prepareForSave({
 								...sceneData,
 								id: videoId,
+								name: sceneData.name || sceneName,
 							});
 							console.log(
 								`Downloading scene ${JSON.stringify(savable)}`

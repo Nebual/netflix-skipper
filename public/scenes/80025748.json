@@ -1,0 +1,13 @@
+{
+  "id": 80025748,
+  "name": "Sense8_S1E4",
+  "scenes": [
+    {
+      "time": 2222959,
+      "next": 2251347,
+      "thresholds": {
+        "needle": 2
+      }
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "id": 80025747,
+  "name": "Sense8_S1E3",
+  "scenes": [
+    {
+      "time": 134433,
+      "next": 139748,
+      "thresholds": {
+        "blood": 2
+      }
+    },
+    {
+      "time": 159933,
+      "next": 171524,
+      "thresholds": {
+        "blood": 2
+      }
+    },
+    {
+      "time": 2446120,
+      "next": 2457974,
+      "thresholds": {
+        "violence": 1
+      }
+    },
+    {
+      "time": 2506597,
+      "next": 2511597,
+      "thresholds": {
+        "violence": 1
+      }
+    },
+    {
+      "time": 2514447,
+      "next": 2519458,
+      "thresholds": {
+        "violence": 2,
+        "suffering": 1
+      }
+    },
+    {
+      "time": 2529365,
+      "next": 2535149,
+      "thresholds": {
+        "violence": 1
+      }
+    },
+    {
+      "time": 2574793,
+      "next": 2678365,
+      "thresholds": {
+        "violence": 1
+      }
+    },
+    {
+      "time": 2596988,
+      "next": 2603731,
+      "thresholds": {
+        "suffering": 2,
+        "violence": 2,
+        "blood": 1
+      }
+    }
+  ]
+}

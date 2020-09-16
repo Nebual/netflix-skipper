@@ -39,10 +39,14 @@ function loadScript(scriptUrl) {
             console.debug('Loaded ' + data.name + ' (' + data.scenes.length + ' scenes) from extension.');
             sendVideoScenes(data);
         } catch (e) {
-            const webData = await getJSON('https://gitcdn.xyz/repo/Nebual/netflix-skipper/master/' + filename)
+			try {
+				const webData = await getJSON('https://gitcdn.xyz/repo/Nebual/netflix-skipper/master/' + filename)
 
-            console.debug('Loaded ' + webData.name + ' (' + webData.scenes.length + ' scenes) from Web repo.');
-            sendVideoScenes(webData);
+				console.debug('Loaded ' + webData.name + ' (' + webData.scenes.length + ' scenes) from Web repo.');
+				sendVideoScenes(webData);
+			} catch (e) {
+				console.debug('NS: Unable to find scene data', filename);
+			}
         }
 	});
 

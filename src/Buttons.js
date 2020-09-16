@@ -40,15 +40,15 @@ export function IconButton({ onClick, icon, label, style }) {
 	);
 }
 
-export function Threshold({ value, setValue, icon, label, max = 3 }) {
+export function Threshold({ value, setValue, icon, label, max = 3, className }) {
 	value = value || 0;
 	return (
 		<span
-			className={`IconButton IconButton--threshold-${value}`}
+			className={`IconButton IconButton--threshold-${value} ${className}`}
 			title={`${label} ${value}/${max}`}
 			aria-label={label}
 			onClick={(e) => {
-				setValue(value < max ? value + 1 : 0);
+				setValue && setValue(value < max ? value + 1 : 0);
 			}}
 			role="img"
 		>

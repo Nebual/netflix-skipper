@@ -1,0 +1,74 @@
+{
+  "id": 80025750,
+  "name": "Sense8_S1E6",
+  "scenes": [
+    {
+      "time": 726955,
+      "next": 760851,
+      "thresholds": {
+        "violence": 2,
+        "suffering": 2
+      }
+    },
+    {
+      "time": 726955,
+      "next": 911485,
+      "thresholds": {
+        "suffering": 1,
+        "violence": 1
+      }
+    },
+    {
+      "time": 770782,
+      "next": 782795,
+      "thresholds": {
+        "violence": 2,
+        "suffering": 2
+      }
+    },
+    {
+      "time": 800597,
+      "next": 808734,
+      "thresholds": {
+        "suffering": 2,
+        "violence": 2
+      }
+    },
+    {
+      "time": 834144,
+      "next": 839144,
+      "thresholds": {
+        "suffering": 2,
+        "violence": 2
+      }
+    },
+    {
+      "time": 876294,
+      "next": 890565,
+      "thresholds": {
+        "violence": 2
+      }
+    },
+    {
+      "time": 1931000,
+      "next": 1995762,
+      "thresholds": {
+        "sex": 1
+      }
+    },
+    {
+      "time": 2117717,
+      "next": 2122717,
+      "thresholds": {
+        "sex": 1
+      }
+    },
+    {
+      "time": 2202560,
+      "next": 2302187,
+      "thresholds": {
+        "sex": 3
+      }
+    }
+  ]
+}

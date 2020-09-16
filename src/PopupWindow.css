@@ -38,13 +38,13 @@ section {
   opacity: 0.33;
 }
 .IconButton--threshold-1 {
-  outline: rgb(255, 255, 137) solid;
+  outline: rgb(255, 255, 137) 0.6px solid;
 }
 .IconButton--threshold-2 {
-  outline: #ffc04d solid;
+  outline: #ffc04d 1px solid;
 }
 .IconButton--threshold-3 {
-  outline: red solid;
+  outline: red 1.5px solid;
 }
 
 h2, h3 {
@@ -100,11 +100,6 @@ h3 {
   align-items: center;
 }
 
-.option-container .select {
-  width: 220px;
-  font-size: 12px;
-}
-
 .editor-section {
   padding-bottom: 0.5rem;
 }
@@ -112,4 +107,15 @@ h3 {
 .scenes-list {
   max-height: 12rem;
   overflow-y: auto;
+}
+
+.margin-left-auto {
+  margin-left: auto;
+}
+.margin-right-2 {
+  margin-right: 0.5rem;
+}
+
+.threshold-grey {
+  opacity: 0.2;
 }

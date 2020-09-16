@@ -24,6 +24,16 @@ async function requestTheTVDB() {
 	);
 }
 
+function setIconStatus(active) {
+	if (!extensionId) {
+		return;
+	}
+	chrome.runtime.sendMessage(extensionId, {
+		contentScriptQuery: 'setIconStatus',
+		active: !!active,
+	});
+}
+
 class PlexController {
 	static makeRequest(url, user, server) {
 		return new Promise(function(resolve, reject) {
@@ -139,18 +149,19 @@ class PlexController {
 
     class NetflixController {
         constructor() {
-            this.videoPlayer = netflix.appContext.state.playerApp.getAPI().videoPlayer;
-            const enableTimer = setInterval(() => {
-                this.sessionId = this.videoPlayer.getAllPlayerSessionIds()[0];
-                this.player = this.videoPlayer.getVideoPlayerBySessionId(
-                    this.sessionId
-                );
-                if (this.player) {
-                    document.dispatchEvent(new CustomEvent('NS-initializedPlayer'));
-                    clearInterval(enableTimer);
-                }
-            }, 50);
-        }
+			const enableTimer = setInterval(() => {
+				this.videoPlayer = this.videoPlayer
+					|| netflix.appContext.state.playerApp.getAPI().videoPlayer;
+				this.sessionId = this.videoPlayer.getAllPlayerSessionIds()[0];
+				const player = this.videoPlayer.getVideoPlayerBySessionId(this.sessionId);
+				if (player && player.getMovieId() && (!this.player || this.movieId !== player.getMovieId())) {
+					this.player = player;
+					this.movieId = player.getMovieId();
+					console.debug('NS: Netflix Player detected', player.getMovieId());
+					document.dispatchEvent(new CustomEvent('NS-initializedPlayer'));
+				}
+			}, 250);
+		}
 
 		undim() {
 			const overlay = document.getElementsByClassName('evidence-overlay');
@@ -189,6 +200,23 @@ class PlexController {
         getMovieId() {
             return this.player.getMovieId();
         }
+
+		getTitle() {
+			const element = document.querySelector('.video-title h4');
+			if (element) {
+				return element.innerHTML;
+			}
+			return '';
+		}
+
+		getSceneName() {
+			const element = document.querySelector('.video-title span');
+			if (element) {
+				const seasonEpisode = element.innerHTML.replace(':', '');
+				return this.getTitle() + '_' + seasonEpisode;
+			}
+			return '';
+		}
 
         isReady() {
             return this.player && this.player.isReady();
@@ -293,7 +321,9 @@ class PlexController {
             if (cachedFile) {
                 sceneData = JSON.parse(cachedFile);
                 console.info("Loaded " + sceneData.name + " (" + sceneData.scenes.length + " scenes) from cache.");
+                setIconStatus(sceneData.scenes.length > 0);
             } else {
+                setIconStatus(false);
                 document.dispatchEvent(new CustomEvent('NS-requestVideoScenes', {
                     detail: {filename: filename}
                 }));
@@ -334,6 +364,7 @@ class PlexController {
 	}
 	function setSceneData(newData) {
 		sceneData = newData;
+		setIconStatus(newData.scenes && newData.scenes.length > 0)
 		lastFrameTime = 0;
 		nextTriggerIndex = 0;
 		localStorage.setItem(`NS/scenes/${sceneData.id}.json`, JSON.stringify(sceneData));
@@ -355,6 +386,7 @@ class PlexController {
 		if (e.detail.getVideoId) {
 			chrome.runtime.sendMessage(extensionId, {
 				videoId: player.getMovieId(),
+				sceneName: player.getSceneName(),
 			});
 		}
 		if (e.detail.getCurrentTime) {
@@ -387,6 +419,7 @@ class PlexController {
         if (enableSkipping) {
             syncTimer = setInterval(trySkip, checkInterval);
         }
+        setIconStatus(sceneData && sceneData.scenes && sceneData.scenes.length > 0);
     });
 })();
 
