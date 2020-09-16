@@ -13,6 +13,17 @@ function loadScript(scriptUrl) {
 	(document.head || document.documentElement).appendChild(script);
 }
 
+function sendToPage(eventId, detail) {
+	window.postMessage(
+		{
+			direction: 'from-content-script',
+			eventId,
+			detail,
+		},
+		'https://www.netflix.com'
+	);
+}
+
 (function () {
     // make sure the content script is only run once on the page
     if (window.netflixSkipperCSLoaded) {
@@ -24,11 +35,7 @@ function loadScript(scriptUrl) {
 	loadScript(chrome.runtime.getURL('page.js'));
 
 	function sendVideoScenes(data) {
-		document.dispatchEvent(
-			new CustomEvent('NS-playerAction', {
-				detail: { sceneData: data },
-			})
-		);
+		sendToPage('NS-playerAction', { sceneData: data });
 	}
 
     document.addEventListener('NS-requestVideoScenes', async function (e) {
@@ -56,15 +63,24 @@ function loadScript(scriptUrl) {
 			return;
 		}
         chrome.storage.local.get(["enableSkipping", "thresholds"], function (data) {
-            document.dispatchEvent(
-				new CustomEvent('NS-loadSettings', {
-					detail: { ...data, extensionId: chrome.runtime.id },
-				})
-			);
+			sendToPage('NS-loadSettings', {
+				...data,
+				extensionId: chrome.runtime.id,
+			});
         });
     }
 
     document.addEventListener('NS-initializedPlayer', reloadSettings);
+
+	// receiving from the page
+	window.addEventListener("message", function(event) {
+		if (event.source !== window || !event.data || event.data.direction !== "from-page-script") {
+			return;
+		}
+		if (event.data.destination === 'background' || event.data.destination === "popupWindow") {
+			chrome.runtime.sendMessage({...event.data});
+		}
+	})
 
     // interaction with the popup
     chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
@@ -75,11 +91,7 @@ function loadScript(scriptUrl) {
             return;
         }
 		if (request.type === 'playerAction') {
-			document.dispatchEvent(
-				new CustomEvent('NS-playerAction', {
-					detail: request.data,
-				})
-			);
+			sendToPage('NS-playerAction', request.data);
 
 			sendResponse({});
 			return;

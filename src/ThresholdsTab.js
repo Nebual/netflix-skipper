@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useThresholdStorage } from './hooks';
 import { sampleScene, baseThresholds } from './util';
 import { Threshold } from './Buttons';
-import Select from "./Select";
+import Select from './Select';
 
 const sexOptions = [
 	{ value: '0', label: 'No nude content (you prude)' },
@@ -40,7 +40,7 @@ const needleOptions = [
 	{ value: '3', label: 'Show use of needles' },
 ];
 
-export default function ThresholdsTab({ sendReload, setError }) {
+export default function ThresholdsTab({ sendReload, sendMessage, setError }) {
 	const [sex, setSex] = useThresholdStorage('sex', '2');
 	const [blood, setBlood] = useThresholdStorage('blood', '2');
 	const [violence, setViolence] = useThresholdStorage('violence', '2');
@@ -59,17 +59,20 @@ export default function ThresholdsTab({ sendReload, setError }) {
 			return;
 		}
 
-		function onMessageExternal(message, sender, sendResponse) {
-			if (message.sceneData) {
-				setSceneData(message.sceneData);
+		function onMessage(request, sender, sendResponse) {
+			if (request.destination !== 'popupWindow') {
+				return;
+			}
+			if (request.detail.sceneData) {
+				setSceneData(request.detail.sceneData);
 			}
 		}
-		window.chrome.runtime.onMessageExternal.addListener(onMessageExternal);
+		window.chrome.runtime.onMessage.addListener(onMessage);
+
+		sendMessage('playerAction', { getSceneData: true }, setError);
 
 		return () => {
-			window.chrome.runtime.onMessageExternal.removeListener(
-				onMessageExternal
-			);
+			window.chrome.runtime.onMessage.removeListener(onMessage);
 		};
 	}, []);
 
@@ -91,14 +94,18 @@ export default function ThresholdsTab({ sendReload, setError }) {
 					value={min}
 					icon={threshold.icon}
 					label={threshold.label}
-					className={`margin-left-auto margin-right-2 ${value < min && 'threshold-grey'}`}
+					className={`margin-left-auto margin-right-2 ${
+						value < min && 'threshold-grey'
+					}`}
 				/>
 				{max > min && (
 					<Threshold
 						value={max}
 						icon={threshold.icon}
 						label={threshold.label}
-						className={`margin-right-2 ${value < max && 'threshold-grey'}`}
+						className={`margin-right-2 ${
+							value < max && 'threshold-grey'
+						}`}
 					/>
 				)}
 			</>

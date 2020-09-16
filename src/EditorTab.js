@@ -59,20 +59,25 @@ export default function EditorTab({ sendMessage, setError }) {
 		if (!chrome || !chrome.runtime || !chrome.runtime.onMessageExternal) {
 			return;
 		}
-		function onMessageExternal(message, sender, sendResponse) {
-			if (message.currentTime) {
-				setCurrentTime(message.currentTime);
+
+		function onMessage(request, sender, sendResponse) {
+			if (request.destination !== 'popupWindow') {
+				return;
 			}
-			if (message.videoId) {
+			const detail = request.detail;
+			if (detail.currentTime) {
+				setCurrentTime(detail.currentTime);
+			}
+			if (detail.videoId) {
 				isLoadedRef.current = false;
-				setVideoId(message.videoId);
-				setSceneName(message.sceneName);
+				setVideoId(detail.videoId);
+				setSceneName(detail.sceneName);
 			}
-			if (message.sceneData) {
-				setSceneData(message.sceneData);
+			if (detail.sceneData) {
+				setSceneData(detail.sceneData);
 			}
 		}
-		chrome.runtime.onMessageExternal.addListener(onMessageExternal);
+		chrome.runtime.onMessage.addListener(onMessage);
 
 		sendPlayerAction({
 			getVideoId: true,
@@ -80,8 +85,9 @@ export default function EditorTab({ sendMessage, setError }) {
 			getSceneData: true,
 		});
 
-		return () =>
-			chrome.runtime.onMessageExternal.removeListener(onMessageExternal);
+		return () => {
+			chrome.runtime.onMessage.removeListener(onMessage);
+		};
 	}, []);
 
 	const customThresholds = [

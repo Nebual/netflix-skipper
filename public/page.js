@@ -7,16 +7,29 @@ function showToast(msg) {
 	console.log('[NetflixSkipper] ' + msg);
 }
 
-let extensionId = '';
+function sendToPopup(detail) {
+	window.postMessage(
+		{
+			direction: 'from-page-script',
+			destination: 'popupWindow',
+			detail,
+		},
+		'*'
+	);
+}
 
 function setIconStatus(active) {
-	if (!extensionId) {
-		return;
-	}
-	chrome.runtime.sendMessage(extensionId, {
-		contentScriptQuery: 'setIconStatus',
-		active: !!active,
-	});
+	window.postMessage(
+		{
+			direction: 'from-page-script',
+			destination: 'background',
+			detail: {
+				contentScriptQuery: 'setIconStatus',
+				active: !!active,
+			},
+		},
+		'*'
+	);
 }
 
 (function () {
@@ -25,6 +38,8 @@ function setIconStatus(active) {
         return;
     }
     window.netflixSkipperLoaded = true;
+
+	let extensionId = '';
 
     class NetflixController {
         constructor() {
@@ -152,6 +167,7 @@ function setIconStatus(active) {
                     console.info("NS: Seeking past scene", scene);
                     player.seek(scene.next);
                     player.play();
+                    nextTriggerIndex++;
                     break;
                 } else {
                     // console.debug("Ignoring", scene);
@@ -235,9 +251,7 @@ function setIconStatus(active) {
     document.addEventListener('NS-initializedPlayer', resetVideoScenes);
 
     function sendCurrentTime() {
-		chrome.runtime.sendMessage(extensionId, {
-			currentTime: player.getCurrentTime(),
-		});
+		sendToPopup({ currentTime: player.getCurrentTime() });
 	}
 	function setSceneData(newData) {
 		sceneData = newData;
@@ -247,57 +261,69 @@ function setIconStatus(active) {
 		localStorage.setItem(`NS/scenes/${sceneData.id}.json`, JSON.stringify(sceneData));
 	}
 
-	document.addEventListener('NS-playerAction', function (e) {
-		console.debug('NS playerAction received', e.detail);
-		if (e.detail.playPauseToggle) {
+	window.addEventListener("message", function(e) {
+		if (e.source !== window || !e.data || e.data.direction !== 'from-content-script') {
+			return;
+		}
+		if (e.data.eventId === 'NS-playerAction') {
+			handlePlayerAction(e.data.detail);
+		} else if (e.data.eventId === 'NS-loadSettings') {
+			handleLoadSettings(e.data.detail);
+		}
+	});
+    function handlePlayerAction(message) {
+		console.debug('NS playerAction received', message);
+		if (message.playPauseToggle) {
 			player.isPlaying() ? player.pause() : player.play();
 			sendCurrentTime();
-		} else if (e.detail.time) {
-			player.seek(e.detail.time);
+		} else if (message.time) {
+			player.seek(message.time);
 			nextTriggerIndex = 0;
-		} else if (e.detail.delta) {
-			player.seek(player.getCurrentTime() + e.detail.delta);
+		} else if (message.delta) {
+			player.seek(player.getCurrentTime() + message.delta);
 			nextTriggerIndex = 0;
 			sendCurrentTime();
 		}
-		if (e.detail.getVideoId) {
-			chrome.runtime.sendMessage(extensionId, {
+		if (message.getVideoId) {
+			sendToPopup({
 				videoId: player.getMovieId(),
 				sceneName: player.getSceneName(),
 			});
 		}
-		if (e.detail.getCurrentTime) {
+		if (message.getCurrentTime) {
 			sendCurrentTime()
 		}
 
-		if (e.detail.sceneData) {
-			setSceneData(e.detail.sceneData)
-			console.info(`NS: Loaded ${e.detail.sceneData.name} (${e.detail.sceneData.scenes.length} scenes)`);
+		if (message.sceneData) {
+			setSceneData(message.sceneData)
+			console.info(`NS: Loaded ${message.sceneData.name} (${message.sceneData.scenes.length} scenes)`);
 		}
 
-		if (e.detail.getSceneData) {
-			chrome.runtime.sendMessage(extensionId, { sceneData });
+		if (message.getSceneData) {
+			sendToPopup({ sceneData });
 		}
 
-		if (e.detail.writeToUrlHash) {
-			const json = JSON.stringify(e.detail.writeToUrlHash)
+		if (message.writeToUrlHash) {
+			const json = JSON.stringify(message.writeToUrlHash)
 			console.log(`NS: Downloading sceneData ${json}`);
 			window.location.hash = `#_${LZString.compressToEncodedURIComponent(json)}_`;
 		}
-	});
+	}
 
-    let syncTimer;
-    document.addEventListener('NS-loadSettings', function (e) {
-        console.debug("NS: loaded settings", e.detail);
-        thresholds = e.detail.thresholds;
-        extensionId = e.detail.extensionId;
-        enableSkipping = e.detail.enableSkipping;
-        clearInterval(syncTimer);
-        if (enableSkipping) {
-            syncTimer = setInterval(trySkip, checkInterval);
-        }
-        setIconStatus(sceneData && sceneData.scenes && sceneData.scenes.length > 0);
-    });
+	let syncTimer;
+	function handleLoadSettings(message) {
+		console.debug('NS: loaded settings', message);
+		thresholds = message.thresholds;
+		extensionId = message.extensionId;
+		enableSkipping = message.enableSkipping;
+		clearInterval(syncTimer);
+		if (enableSkipping) {
+			syncTimer = setInterval(trySkip, checkInterval);
+		}
+		setIconStatus(
+			sceneData && sceneData.scenes && sceneData.scenes.length > 0
+		);
+	}
 })();
 
 /*	This work is licensed under Creative Commons GNU LGPL License.

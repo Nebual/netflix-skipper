@@ -108,7 +108,7 @@ export default function PopupWindow() {
 				</section>
 			)}
 			{!editorMode ? (
-				<ThresholdsTab sendReload={sendReload} setError={setError} />
+				<ThresholdsTab sendReload={sendReload} sendMessage={sendMessage} setError={setError} />
 			) : (
 				<EditorTab sendMessage={sendMessage} setError={setError} />
 			)}

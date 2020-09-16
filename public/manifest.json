@@ -3,7 +3,7 @@
 
   "name": "__MSG_extName__",
   "description": "__MSG_extDescription__",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "default_locale": "en",
   "permissions": [
     "activeTab",
@@ -20,7 +20,8 @@
       "38": "icon_128.png"
     },
     "default_title": "__MSG_extName__",
-    "default_popup": "index.html"
+    "default_popup": "index.html",
+    "show_matches": ["*://www.netflix.com/*"]
   },
   "content_scripts": [
     {
