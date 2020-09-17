@@ -1,0 +1,22 @@
+{
+  "id": 80198288,
+  "name": "Salt Fat Acid Heat_Heat",
+  "scenes": [
+    {
+      "time": 162000,
+      "next": 179822,
+      "thresholds": {
+        "meat": 2,
+        "blood": 3
+      }
+    },
+    {
+      "time": 233000,
+      "next": 273075,
+      "thresholds": {
+        "blood": 3,
+        "meat": 2
+      }
+    }
+  ]
+}
